@@ -7,14 +7,14 @@ class RequestFormer():
     def __init__(self):
         pass 
 
-    def filterInputJSON(self, data: dict(), wantedKeys: set()) -> bool:
+    def filterInputJSON(self, data: dict(), wantedKeys: set()) -> dict():
         if not('userEmail' in data):
             print("Missing userEmail")
-            return False
+            return None
 
         dictFilter = lambda x, y: dict([(i, x[i]) for i in x if i in set(y)])
         
         data = dictFilter(data, wantedKeys)
 
-        return True  
+        return data  
     
