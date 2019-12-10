@@ -3,6 +3,7 @@
 from Credentials import Credentials
 import json
 import http.client 
+import base64
 
 class ConnectionManager():
     def __init__(self):
@@ -18,7 +19,7 @@ class ConnectionManager():
         cred = {
             "cmd": "logon",
             "email": credentials.email,
-            "password": credentials.password
+            "password": base64.b64decode(credentials.password).decode()
         }
         
         jsonCred = json.dumps(cred)
@@ -53,7 +54,7 @@ class ConnectionManager():
         print(l)
 
     #TODO: Remove later
-    def testRequest(self, token, InputJSON) -> None:
+    def testRequest(self, token, query) -> None:
         print("test request...")
 
         conn = http.client.HTTPSConnection("fogbugz.unity3d.com")
@@ -63,7 +64,7 @@ class ConnectionManager():
         body = {
             "cmd": "search",
             "token": token,
-            "q": 'correspondent: "email"',
+            "q": query,
             "cols": "sTitle"
         }
         
@@ -74,5 +75,10 @@ class ConnectionManager():
         response = conn.getresponse()
         l = json.loads(response.read())
         print(l)
+    
+
+
+
+
 
 

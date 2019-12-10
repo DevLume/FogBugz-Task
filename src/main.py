@@ -5,25 +5,35 @@ from RequestFormer import RequestFormer
 from Credentials import Credentials
 from ConnectionManager import ConnectionManager
 
+from RequestFormer import buildQuery
+
+from UserInputManager import UserInputManager
+
 if __name__ == "__main__":
     fm = FileManager()
 
-    wantedKeys = {"userEmail", "dateOpened", "rating", "category"} # a set of properties used to filter the input JSON
+    wantedKeys = {"correspondent", "dateOpened", "rating", "category"} # a set of properties used to filter the input JSON
 
-    data = fm.readJSON("../InputFiles/test1.json")
+    data = fm.readJSON("../InputFiles/test2.json")
 
     rf = RequestFormer()
 
-    data = rf.filterInputJSON(data, wantedKeys) # making sure that our Input JSON contains only needed properties 
+    """data = rf.filterInputJSON(data, wantedKeys)
+    rf.formSearchString(data)"""
+
+    uim = UserInputManager()
+    cred = uim.getUserCredentials()
+
+    data = rf.filterInputJSON(data, wantedKeys)
 
     #print(data)
+
+    query = rf.formSearchString(data)
 
     cm = ConnectionManager()
 
-    token = cm.login(Credentials("", ""))
+    token = cm.login(cred)
 
-    cm.testRequest(token, data)
+    cm.testRequest(token, query)
 
     cm.logoff(token)
-
-    #print(data)
