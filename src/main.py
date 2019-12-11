@@ -14,7 +14,9 @@ if __name__ == "__main__":
 
     wantedKeys = {"correspondent", "dateOpened", "rating", "category"} # a set of properties used to filter the input JSON
 
-    data = fm.readJSON("../InputFiles/test2.json")
+    data = fm.readJSON("../InputFiles/test1.json")
+
+    #fm.writeJSON(data, "../OutputFiles/testOutput0.json")
 
     rf = RequestFormer()
 

@@ -13,6 +13,7 @@ class FileManager():
 
             return data
 
-    def writeJSON(self, filename) -> None:
-        #TODO
-        pass
+    def writeJSON(self, data, filename) -> None:
+        with open(filename, "w") as json_file:
+            json_file.write(json.dumps(data, indent=4, sort_keys=True))
+        

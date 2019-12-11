@@ -65,6 +65,4 @@ def buildQuery(queryBases, queryJSON):
     
     return Query(queryJSON, *queryBases)
 
-
-
     
