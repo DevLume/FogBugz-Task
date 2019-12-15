@@ -1,41 +1,44 @@
 #!usr/bin/env python3
 
 from FileManager import FileManager
-from RequestFormer import RequestFormer
 from Credentials import Credentials
+from Configuration import Configuration
 from ConnectionManager import ConnectionManager
 
-from RequestFormer import buildQuery
+from QueryBuilder import QueryBuilder
+
+from RequestBuilder import RequestBuilder
 
 from UserInputManager import UserInputManager
 
 if __name__ == "__main__":
-    fm = FileManager()
-
-    wantedKeys = {"correspondent", "dateOpened", "rating", "category"} # a set of properties used to filter the input JSON
-
-    data = fm.readJSON("../InputFiles/test1.json")
-
-    #fm.writeJSON(data, "../OutputFiles/testOutput0.json")
-
-    rf = RequestFormer()
-
-    """data = rf.filterInputJSON(data, wantedKeys)
-    rf.formSearchString(data)"""
-
     uim = UserInputManager()
-    cred = uim.getUserCredentials()
+    config = uim.parseCLArgs() # parsing CL arguments may change the config
+    credentials = uim.getUserCredentials() 
 
-    data = rf.filterInputJSON(data, wantedKeys)
+    fm = FileManager()
+    inputData = fm.readJSON(config.inputFile)
 
-    #print(data)
+    # Query builder may be different in the future, hence allowing RequestBuilder to use different Query builders
+    qb = QueryBuilder()
+    rq = RequestBuilder(qb)
 
-    query = rf.formSearchString(data)
+    filteredInputData = rq.filterInputJSON(inputData, config.wantedKeys) # leaving only 'wanted' properies. See WantedKeys in Configuration.py
+    queryString = rq.formSearchString(filteredInputData)
 
-    cm = ConnectionManager()
+    connection = ConnectionManager()
+    loginResult = connection.login(credentials) #login returns tuple(bool, str), therefore if login is succesful, the output is (True, tokenValue)
+    
+    if(not loginResult[0]):
+        fm.writeJSON(loginResult[1], config.connErrorFile)
+        exit()
+    
+    requestResult = connection.sendQuery(loginResult[1], queryString)
+    fm.writeJSON(requestResult, config.outputFile)
 
-    token = cm.login(cred)
-
-    cm.testRequest(token, query)
-
-    cm.logoff(token)
+    logoffResult = connection.logoff(loginResult[1])
+    
+    if(not logoffResult[0]):
+        fm.writeJSON(loginResult[1], config.connErrorFile)
+        exit()
+    

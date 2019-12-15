@@ -2,18 +2,20 @@
 
 from Credentials import Credentials
 from json import JSONEncoder
-from ResponseManager import ComplexEncoder
+
 import json
 import http.client 
 import base64
-from ResponseManager import SuccesfulResponse, Report, ErrorResponse
+
+from ResponseBuilder import ResponseBuilder
 
 class ConnectionManager():
     def __init__(self):
+        self.responseBuilder = ResponseBuilder()
         pass 
 
     #login, return token
-    def login(self, credentials: Credentials) -> str:
+    def login(self, credentials: Credentials) -> (bool, dict()):
         print("Sending login request...")
         conn = http.client.HTTPSConnection("fogbugz.unity3d.com")
         
@@ -30,11 +32,13 @@ class ConnectionManager():
         conn.request('POST', "/f/api/0/jsonapi", jsonCred, headers)
 
         response = conn.getresponse()
-        l = json.loads(response.read())
-        print(l)
-
-        token = l['data']['token']
-        return token
+        data = json.loads(response.read())
+        if(len(data['errors']) > 0):
+            print("Errors are found when logging in!")
+            return (False, self.responseBuilder.buildResponse(data))
+        else:
+            token = data['data']['token']
+            return (True, token)
     
     def logoff(self, token) -> None:
         print("Sending logoff request...")
@@ -53,12 +57,15 @@ class ConnectionManager():
         conn.request('POST', "/f/api/0/jsonapi", jsonCred, headers)
 
         response = conn.getresponse()
-        l = json.loads(response.read())
-        print(l)
+        data = json.loads(response.read())
+        if(len(data['errors']) > 0):
+            print("Errors are found when logging off!")
+            return (False, self.responseBuilder.buildResponse(data))
+        else:
+            return (True, "")
 
-    #TODO: Remove later
-    def testRequest(self, token, query) -> None:
-        print("test request...")
+    def sendQuery(self, token, query) -> dict:
+        print("Sending query...")
 
         conn = http.client.HTTPSConnection("fogbugz.unity3d.com")
         
@@ -88,31 +95,6 @@ class ConnectionManager():
         conn.request('POST', "/f/api/0/jsonapi", jsonBody, headers)
 
         response = conn.getresponse()
-        l = json.loads(response.read())
-        print(self.formResponse(l))
-    
-    def formResponse(self, data) -> str:
-        #Temporary solution. rework later TODO
-        resp = SuccesfulResponse()
-        resp.userEmail = data['data']['cases'][0]['sCustomerEmail']
-        resp.userLicense = data['data']['cases'][0]['license']
-        for case in data['data']['cases']:
-            rep = Report()
-            rep.id = case['ixBug']
-            rep.title = case['sTitle']
-            rep.dateOpened = case['dtOpened']
-            rep.dateClosed = case['dtClosed']
-            rep.category = case['sCategory']
-            rep.status = case['sStatus']
-            rep.rating = case['rating']
-            rep.version = case['sVersion']
-            resp.userReports.append(rep.__dict__)
+        data = json.loads(response.read())
 
-        respJSON = json.dumps(resp, cls=ComplexEncoder)
-        
-        #print(resp.__dict__)
-
-        #encoder = JSONEncoder()
-        #respJSON = encoder.encode(resp.__dict__)
-
-        print(json.dumps(respJSON, indent=4, sort_keys=False))
+        return self.responseBuilder.buildResponse(data)
